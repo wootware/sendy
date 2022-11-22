@@ -18,7 +18,7 @@ services:
   db_sendy:
     hostname: db_sendy
     container_name: db_sendy
-    image: mysql:5.6
+    image: mysql:8
     env_file:
       - sendy.env
     environment:
@@ -26,6 +26,8 @@ services:
     secrets:
       - db_root_password
       - db_password
+    ports:
+      - 3306:3306
     volumes:
       - data_sendy:/var/lib/mysql
 
