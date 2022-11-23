@@ -1,0 +1,31 @@
+name: Continuous Delivery
+
+on: 
+  push:
+    branches:
+    - main 
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build and Push - Sendy
+    uses: ./.github/workflows/build-image.yml
+    with:
+      ecr_registry: 878182071479.dkr.ecr.af-south-1.amazonaws.com
+      ecr_repository: apps/sendy
+      image_tag: '6.0.3'
+      dockerfile: Dockerfile
+    secrets: inherit
+
+  deploy:
+    name: Deploy (Helm) to Production
+    uses: ./.github/workflows/deploy-helm.yml
+    needs: build
+    with:
+      environment: production
+      image_tag: '6.0.3'
+      namespace: sendy
+      release: sendy
+    secrets: inherit

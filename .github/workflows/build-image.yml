@@ -1,0 +1,50 @@
+name: Build and Push Image
+
+on:
+  workflow_call:
+    inputs:
+      ecr_registry:
+        required: true
+        type: string
+      ecr_repository:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      dockerfile:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Docker Build and Push to ECR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Env Vars
+        run: |
+          echo "IMAGE=${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}:${{ inputs.image_tag }}" >> $GITHUB_ENV
+
+      # Checkout the code so we can build and push the docker images
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      # We need to authenticate with AWS so we can push
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: af-south-1
+
+      # We need to get Docker logged in with our AWS details above so the docker push command will work
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker Image
+        run: docker image build -f ${{ inputs.dockerfile }} -t $IMAGE ./src
+
+        # Pushes the image to ECR so it is ready for deployment
+      - name: Push to ECR
+        run: docker image push $IMAGE

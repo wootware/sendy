@@ -1,0 +1,60 @@
+name: Deploy Helm Chart
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      release:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+    - name: Set Env Vars
+      run: |
+        echo "IMAGE_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+
+    - name: Check out repository code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: af-south-1
+
+    - name: Install kubectl
+      run: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+    - name: Update Kubeconfig
+      run: |
+        aws eks --region af-south-1 update-kubeconfig --name wootware-cluster
+
+    - name: Install Helm
+      run: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+
+    - name: Set appVersion
+      run: |
+        yq -i '.appVersion = env(IMAGE_TAG)' ./helm/Chart.yaml
+
+    - name: Run Helm Upgrade
+      run: |
+        helm upgrade ${{ inputs.release }} ./helm --wait --atomic --install --namespace ${{ inputs.namespace }} --values ./helm/values.${{ inputs.environment }}.yaml
