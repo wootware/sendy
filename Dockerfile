@@ -2,18 +2,18 @@
 # Docker with Sendy Email Campaign Marketing
 #
 # Build:
-# $ docker build -t sendy:latest --target sendy -f ./Dockerfile .
+# $ docker build -t sendy:6.0.3 --target sendy -f ./Dockerfile .
 #
 # Build w/ XDEBUG installed
-# $ docker build -t sendy:debug-latest --target debug -f ./Dockerfile .
+# $ docker build -t sendy:debug-6.0.3 --target debug -f ./Dockerfile .
 #
 # Run:
-# $ docker run --rm -d --env-file sendy.env sendy:latest
+# $ docker run --rm -d --env-file sendy.env sendy:6.0.3
 
 FROM php:7.4.8-apache as sendy
 
-ARG SENDY_VER=6.0.2
-ARG ARTIFACT_DIR=6.0.2
+ARG SENDY_VER=6.0.3
+ARG ARTIFACT_DIR=6.0.3
 
 ENV SENDY_VERSION ${SENDY_VER}
 

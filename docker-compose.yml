@@ -37,7 +37,7 @@ services:
     container_name: sendy
     depends_on:
       - db_sendy
-    image: sendy:latest
+    image: sendy:6.0.3
     build:
       context: .
       # Uncomment to enabled XDEBUG build
