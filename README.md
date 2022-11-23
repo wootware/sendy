@@ -187,3 +187,39 @@ Please [see license](https://raw.githubusercontent.com/bubbajames-docker/sendy/m
 As with all Docker images, these likely also contain other software that may be under other licenses (such as Bash, etc from the base distribution, along with any direct or indirect dependencies of the primary software being contained).
 
 As for any pre-built image usage, it is the image user's responsibility to ensure that any use of this image complies with any relevant licenses for all software contained within.
+
+# Infrastructure Setup
+
+Create a kubernetes namespace
+
+```
+kubectl create namespace sendy
+```
+
+Create a fargate profile to allow nodes to be spun up
+
+```
+aws eks create-fargate-profile --cluster-name wootware-cluster --fargate-profile-name sendy-profile --pod-execution-role-arn arn:aws:iam::878182071479:role/eksctl-wootware-cluster-cl-FargatePodExecutionRole-MRLF6M3O0SP --subnets subnet-063ff2123d7ad0c97 subnet-09c35d5b10e7aabb4 subnet-09f69835502c6a60f --selectors namespace=sendy --tags environment=production,product=sendy
+```
+
+Create CNAME record in Cloudflare
+
+``` # API calls? I did it via the UI ```
+
+AWS policy for the pod
+
+```
+aws iam create-policy --policy-name SendyPodAccess --policy-document file://aws/pod-policy.json --description "The policy that grants the Sendy EKS pod from accessing AWS resources" --tags Key=product,Value=sendy Key=environment,Value=production
+```
+
+Setup service account to access AWS resources (like secrets)
+
+```
+eksctl create iamserviceaccount --name sendy-service-account --namespace sendy --cluster wootware-cluster --role-name "SendyEKSPodRole" --attach-policy-arn arn:aws:iam::878182071479:policy/SendyPodAccess --approve --override-existing-serviceaccounts
+```
+
+Create secret with all the configuration
+
+```
+aws secretsmanager create-secret --name Production/Apps/Sendy/Config --secret-string file://aws/secrets.json --tags Key=project,Value=apps Key=environment,Value=production Key=group,Value=sendy
+```

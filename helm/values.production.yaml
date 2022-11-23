@@ -13,6 +13,13 @@ image:
 nameOverride: ""
 fullnameOverride: ""
 
+serviceAccount:
+  name: sendy-service-account
+
+secrets:
+  name: sendy-secrets
+  key: Production/Apps/Sendy/Config
+
 service:
   type: NodePort
   port: 80
@@ -32,6 +39,10 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+
+database:
+  name: sendy-database
+  externalName: backend-portal.culkamlrjzf6.af-south-1.rds.amazonaws.com
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
